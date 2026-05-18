@@ -1,43 +1,29 @@
-name: Bump Version & Release
+name: Create Release
 
 on:
   push:
     branches: [ main ]
 
+permissions:
+  contents: write
+
 jobs:
-  bump-version:
+  release:
     runs-on: ubuntu-latest
     
     steps:
       - name: Checkout kódu
         uses: actions/checkout@v4
-        with:
-          token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Načítať aktuálnu verziu
-        id: current
+      - name: Načítať verziu
+        id: version
         run: echo "version=$(cat version.txt)" >> $GITHUB_OUTPUT
 
-      - name: Zvýšiť verziu (patch)
-        id: bump
-        run: |
-          OLD=${{ steps.current.outputs.version }}
-          NEW=$(echo $OLD | awk -F. '{print $1"."$2"."$3+1}')
-          echo "Stará: $OLD → Nová: $NEW"
-          echo "new_version=$NEW" >> $GITHUB_OUTPUT
-          echo $NEW > version.txt
-
-      - name: Commit a push novej verzie
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add version.txt
-          git commit -m "chore: bump version to ${{ steps.bump.outputs.new_version }}"
-          git push
-
-      - name: Vytvoriť nový Release
+      - name: Vytvoriť Release
         uses: softprops/action-gh-release@v2
         with:
-          tag_name: v${{ steps.bump.outputs.new_version }}
-          name: Verzia ${{ steps.bump.outputs.new_version }}
-          body: Automaticky vytvorená nová verzia.
+          tag_name: v${{ steps.version.outputs.version }}
+          name: Verzia ${{ steps.version.outputs.version }}
+          body: Automaticky vytvorená verzia ${{ steps.version.outputs.version }}
+          draft: false
+          prerelease: false
